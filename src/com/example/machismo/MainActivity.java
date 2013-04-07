@@ -5,23 +5,30 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Random;
 
-import com.example.machismo.Card.CardState;
-
 import android.app.Activity;
+import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
+import android.widget.TabHost;
+import android.widget.TabHost.OnTabChangeListener;
+import android.widget.TabHost.TabContentFactory;
 import android.widget.TableLayout;
 import android.widget.TableRow;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import com.example.machismo.Card.CardState;
 
 
 /**
@@ -34,7 +41,14 @@ import android.widget.Toast;
  * 			- Added CardState enum to make it simpler to track when to flip a card 
  *
  */
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements TabContentFactory, OnTabChangeListener
+{
+	
+	private TabHost mTabHost;
+    private final String TAB_ONE_TAG = "Pictures";
+    private final String TAB_TWO_TAG = "Match Game";
+    private final int TAB_HEIGHT = 40; 
+    private View tabOneContentView, tabTwoContentView;
 
 	//The number of cards in subset of total cards
 	//These are used for matching game
@@ -64,8 +78,12 @@ public class MainActivity extends Activity {
 		
 		super.onCreate(savedInstanceState);
 		Log.i("Machismo", "Called onCreate");
-		
+	
 		setContentView(R.layout.activity_main);
+        //setup Views for each tab
+        setupViews();
+        // call method to set up tabs
+        setupTabs();
 
 		initCardsIds();
 		back = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.back), Card.scaleWidthFactor, Card.scaleHeightFactor, true);
@@ -80,6 +98,96 @@ public class MainActivity extends Activity {
 	}
 	
 	
+	/**
+	 * Sets up a new tab with given tag by creating a View for the tab (via
+	 * createTabView() ) and adding it to the tab host
+	 * @param tag The tag of the tab to setup
+	 */
+	public void setupTab(String tag) {
+	    View tabView = createTabView(mTabHost.getContext(), tag);
+	    mTabHost.addTab(mTabHost.newTabSpec(tag).setIndicator(tabView).setContent(this));
+
+	    //each tabView has a child view with same id
+	    TextView tv = (TextView) tabView.findViewById(R.id.tabLabel);
+	    tv.setText(tag); 
+	}
+	
+	
+	/**
+	 * Creates a View for a tab
+	 * @param context The context from which the LayoutInflater is obtained
+	 * @param tag The tag to be used as the label on the tab
+	 * @return The inflated view to be used by a tab
+	 */
+	private View createTabView(Context context, String tag) {
+	    View view = LayoutInflater.from(context).inflate(R.layout.tab_layout, null);
+	    
+	    
+	    return view;
+	}
+	
+	
+	
+	/**
+     * Sets up the Views for each tab
+     */
+     public void setupViews() {
+        tabOneContentView = findViewById(R.id.tabOneContentView);
+        //Setting colors to see were the borders are visible is a good method for developing
+        //TODO take colors out later
+        tabOneContentView.setBackgroundColor(Color.BLUE);
+        
+        tabTwoContentView = findViewById(R.id.tabTwoContentView);
+        //tabTwoContentView.setBackgroundColor(Color.GREEN);
+        
+     }
+ 
+    /**
+     * Sets up the tabs for this Activity
+     */
+    public void setupTabs() {
+        mTabHost = (TabHost) findViewById(android.R.id.tabhost);
+        mTabHost.setup();  //must be called
+        mTabHost.setOnTabChangedListener(this);  //use this Activity as the onTabChangedListener
+        //setup each individual tab
+        setupTab(TAB_ONE_TAG);
+        setupTab(TAB_TWO_TAG);
+        setTabHeight(TAB_HEIGHT);
+        // Workaround for "bleeding-through" overlay issue. Set each tab as current tab, by index.
+        // Order should not matter, but the first tab to be shown should be set last.
+        mTabHost.setCurrentTab(1);
+        mTabHost.setCurrentTab(0);
+    }
+	
+    
+ 
+    /**
+     * Sets a custom height for the TabWidget, in dp-units
+     * @param height The height value, corresponding to dp-units
+     */
+    public void setTabHeight(int height) {
+        for (int i = 0; i < mTabHost.getTabWidget().getTabCount(); i++) {
+            mTabHost.getTabWidget().getChildAt(i).getLayoutParams().height
+                = (int) (height * this.getResources().getDisplayMetrics().density);
+        }
+    }
+ 
+    @Override
+    public View createTabContent(String tag) {
+        if (tag.compareTo(TAB_ONE_TAG) == 0)
+            return tabOneContentView;
+        if (tag.compareTo(TAB_TWO_TAG) == 0)
+            return tabTwoContentView;
+        return null;
+    }
+ 
+    public void onTabChanged(String tabName) {
+        
+    }
+	
+	/**
+	 * TODO: Need to fix. This broke after the view was placed in Tabs 
+	 */
 	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
 	    super.onConfigurationChanged(newConfig);
@@ -102,7 +210,7 @@ public class MainActivity extends Activity {
 	 * Updates the action bar with consistent format
 	 */
 	private void setActionBar() {
-		getActionBar().setTitle(String.format("%s  Need to match %d to win points. Total matches: %d, total misses: %d", 
+		getActionBar().setTitle(String.format("%s  Match %d for points. Matches: %d, Misses: %d", 
 				getResources().getString(R.string.app_name), matchQtyForPoints, positiveMatchPoints, negativeMatchPoints));
 	}
 	
@@ -117,7 +225,8 @@ public class MainActivity extends Activity {
 		int drawableId;
 		for (Field field : fields) {
 			
-			if(field.getName().startsWith("back") || field.getName().startsWith("cards")) {
+			if(field.getName().startsWith("back") || field.getName().startsWith("cards")
+					|| field.getName().startsWith("tab")	) {
 				continue;
 			}
 			drawableId = getResources().getIdentifier(field.getName(), "drawable", "com.example.machismo");
@@ -128,6 +237,8 @@ public class MainActivity extends Activity {
 
 	/**
 	 * Builds the table of cards
+	 * TODO Shuffle the entire set of cards on table rather than each row.
+	 *      This method needs to be split into two methods. 1. Create cards. 2. Place on table
 	 * @param randomCardIdList - holds cardIds used 
 	 * @param orientation - portrait or landscape
 	 * @param numberOfCardsInSubset - qty of cards selected to match in game 
@@ -149,8 +260,11 @@ public class MainActivity extends Activity {
 		} else if (orientation == Configuration.ORIENTATION_PORTRAIT) {
 			newRowValue=5;
 		}
-		TableLayout tableLayout = (TableLayout) findViewById(R.id.cardTable);
+		TableLayout tableLayout = (TableLayout) findViewById(R.id.tabTwoContentView);
 		/* Create a new row to be added. */
+		if(tableLayout == null) {
+			return;
+		}
 		TableRow tr = null;
 		/* Create Cards to be the row-content. */
 		for (int i = 0, useCardId = 0; i < tableQty; i++, useCardId++) {
@@ -277,8 +391,10 @@ public class MainActivity extends Activity {
 	 */
 	private void clearTableLayoutViews() {
 		
-		TableLayout tableLayout = (TableLayout) findViewById(R.id.cardTable);
-		
+		TableLayout tableLayout = (TableLayout) findViewById(R.id.tabTwoContentView);
+		if(tableLayout == null) {
+			return;
+		}
 		for (Card card : cardsOnTable) {
 			TableRow tr = (TableRow) card.getParent();
 			if(tr != null) {
