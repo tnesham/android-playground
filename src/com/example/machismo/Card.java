@@ -10,15 +10,31 @@ import android.graphics.Rect;
 import android.widget.ImageView;
 
 
+/**
+ * Android test class to exercise new functionality
+ * @author e300md
+ * 
+ * 4/3/2013 - initial implementation
+ * 4/5/2013 - Added "solved" state so card is neither selected nor not selected, it is no longer part of the game 
+ * 			
+ *
+ */
+
 public class Card extends ImageView {
 
+	public enum CardState {
+	    BACK_SHOWN, SELECTED, MATCH_CANDIDATE, MATCHED 
+	}
+	
+	private CardState cardState = CardState.BACK_SHOWN;
+	
 	private Integer cardType;
 	
 	//Allows the id to be associated with the card before loading the bitmap in showFront
 	private Integer cardFrontId;
 	private Bitmap front;
 	private Bitmap back;
-	private boolean selected;
+	
 	
 	public static final int scaleWidthFactor = 120;
 	public static final int scaleHeightFactor = 160;
@@ -61,13 +77,6 @@ public class Card extends ImageView {
 		cardFrontId = cardId;
 	}
 
-	public boolean isSelected() {
-		return selected;
-	}
-
-	public void setSelected(boolean selected) {
-		this.selected = selected;
-	}
 
 	public Bitmap getBack() {
 		return back;
@@ -79,6 +88,7 @@ public class Card extends ImageView {
 	
 	public void showBack() {
 		setImageBitmap(back);
+		cardState = CardState.BACK_SHOWN;
 	}
 	
 	public void showFront() {
@@ -86,6 +96,22 @@ public class Card extends ImageView {
 			this.front  = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), cardFrontId), scaleWidthFactor, scaleHeightFactor, true);
 		}
 		setImageBitmap(front);
+	}
+
+
+	public void setCardState(CardState cardState) {
+		this.cardState = cardState;
+	}
+
+
+	public boolean hasCardState(CardState cardStateIn) {
+		return this.cardState == cardStateIn;
+	}
+	
+	public boolean isSameCardType(Card cardIn) {
+		
+		return ( cardIn.getCardType() == this.getCardType() ) ; 
+		
 	}
 
 }
