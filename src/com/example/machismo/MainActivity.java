@@ -1,8 +1,11 @@
 package com.example.machismo;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 
 import android.app.Activity;
@@ -28,6 +31,11 @@ import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.ObjectListing;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.example.machismo.Card.CardState;
 
 
@@ -39,14 +47,20 @@ import com.example.machismo.Card.CardState;
  * 4/5/2013 - Add ability to maintain "state" when device rotated - see onConfigurationChanged
  * 			- Added handler.postDelayed(runnable) to hide card(s) that did not match
  * 			- Added CardState enum to make it simpler to track when to flip a card 
+ * 4/7/2013 - Added TabHost and tabs
  *
  */
 public class MainActivity extends Activity implements TabContentFactory, OnTabChangeListener
 {
 	
+	public static final String AWS_ACCESS_ID = "AKIAJJJBR3T3ZGZ73BAA";
+	public static final String AWS_SECRET_KEY = "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";
+	public static final String AWS_PICTURE_BUCKET = "ENT_CARD_BACK_IMAGES";
+	
 	private TabHost mTabHost;
-    private final String TAB_ONE_TAG = "Pictures";
-    private final String TAB_TWO_TAG = "Match Game";
+	private final String TAB_ONE_TAG = "Match Game";
+    private final String TAB_TWO_TAG = "Pictures";
+    
     private final int TAB_HEIGHT = 40; 
     private View tabOneContentView, tabTwoContentView;
 
@@ -72,6 +86,9 @@ public class MainActivity extends Activity implements TabContentFactory, OnTabCh
 	
 	//difficulty level
 	private int matchQtyForPoints=2;
+	
+	
+	private AmazonS3Client s3Client;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -86,7 +103,7 @@ public class MainActivity extends Activity implements TabContentFactory, OnTabCh
         setupTabs();
 
 		initCardsIds();
-		back = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.back), Card.scaleWidthFactor, Card.scaleHeightFactor, true);
+		//back = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.back), Card.scaleWidthFactor, Card.scaleHeightFactor, true);
 
 		
 		generateRandomCardIds(cardIds, randomCardIds, numberOfCardsInSubset);
@@ -95,6 +112,28 @@ public class MainActivity extends Activity implements TabContentFactory, OnTabCh
 		buildTable(randomCardIds, getResources().getConfiguration().orientation, numberOfCardsInSubset, true);
 
 		setActionBar();
+		
+		//s3Client = new AmazonS3Client( new BasicAWSCredentials( AWS_ACCESS_ID, AWS_SECRET_KEY ) );
+		//ObjectListing images = s3Client.listObjects(AWS_PICTURE_BUCKET ); 
+
+		//List<S3ObjectSummary> list = images.getObjectSummaries();
+//		for(S3ObjectSummary image: list) {
+//		    S3Object obj = s3Client.getObject(AWS_PICTURE_BUCKET , image.getKey());
+//		}
+		
+//		if(list != null && list.size() > 0) {
+//
+//			S3ObjectSummary image = list.get(0);
+//		
+//			S3Object o = s3Client.getObject(AWS_PICTURE_BUCKET, image.getKey());
+//			InputStream is = o.getObjectContent();
+//			back = BitmapFactory.decodeStream(is);
+//			try {
+//				is.close();
+//			} catch (IOException e) {
+//				
+//			}
+//		}
 	}
 	
 	
@@ -135,10 +174,10 @@ public class MainActivity extends Activity implements TabContentFactory, OnTabCh
         tabOneContentView = findViewById(R.id.tabOneContentView);
         //Setting colors to see were the borders are visible is a good method for developing
         //TODO take colors out later
-        tabOneContentView.setBackgroundColor(Color.BLUE);
+        //tabOneContentView.setBackgroundColor(Color.BLUE);
         
         tabTwoContentView = findViewById(R.id.tabTwoContentView);
-        //tabTwoContentView.setBackgroundColor(Color.GREEN);
+        tabTwoContentView.setBackgroundColor(Color.GREEN);
         
      }
  
@@ -260,7 +299,7 @@ public class MainActivity extends Activity implements TabContentFactory, OnTabCh
 		} else if (orientation == Configuration.ORIENTATION_PORTRAIT) {
 			newRowValue=5;
 		}
-		TableLayout tableLayout = (TableLayout) findViewById(R.id.tabTwoContentView);
+		TableLayout tableLayout = (TableLayout) findViewById(R.id.tabOneContentView);
 		/* Create a new row to be added. */
 		if(tableLayout == null) {
 			return;
@@ -391,7 +430,7 @@ public class MainActivity extends Activity implements TabContentFactory, OnTabCh
 	 */
 	private void clearTableLayoutViews() {
 		
-		TableLayout tableLayout = (TableLayout) findViewById(R.id.tabTwoContentView);
+		TableLayout tableLayout = (TableLayout) findViewById(R.id.tabOneContentView);
 		if(tableLayout == null) {
 			return;
 		}
