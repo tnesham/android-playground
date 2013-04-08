@@ -14,6 +14,7 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -95,7 +96,9 @@ public class MainActivity extends Activity implements TabContentFactory, OnTabCh
 		
 		super.onCreate(savedInstanceState);
 		Log.i("Machismo", "Called onCreate");
-	
+
+		AsyncTask.execute(awsRunnable);
+		
 		setContentView(R.layout.activity_main);
         //setup Views for each tab
         setupViews();
@@ -113,28 +116,47 @@ public class MainActivity extends Activity implements TabContentFactory, OnTabCh
 
 		setActionBar();
 		
-		//s3Client = new AmazonS3Client( new BasicAWSCredentials( AWS_ACCESS_ID, AWS_SECRET_KEY ) );
-		//ObjectListing images = s3Client.listObjects(AWS_PICTURE_BUCKET ); 
-
-		//List<S3ObjectSummary> list = images.getObjectSummaries();
-//		for(S3ObjectSummary image: list) {
-//		    S3Object obj = s3Client.getObject(AWS_PICTURE_BUCKET , image.getKey());
-//		}
-		
-//		if(list != null && list.size() > 0) {
-//
-//			S3ObjectSummary image = list.get(0);
-//		
-//			S3Object o = s3Client.getObject(AWS_PICTURE_BUCKET, image.getKey());
-//			InputStream is = o.getObjectContent();
-//			back = BitmapFactory.decodeStream(is);
-//			try {
-//				is.close();
-//			} catch (IOException e) {
-//				
-//			}
-//		}
 	}
+	
+
+	/**
+	 * 
+	 * StrictMode.ThreadPolicy was introduced since API Level 9 and the default thread policy had been changed since API Level 11, 
+	 * which in short, does not allow network operation (include HttpClient and HttpUrlConnection) get executed on UI thread. 
+	 * if you do this, you get NetworkOnMainThreadException.
+	 * 
+	 * 
+	 */
+	private Runnable awsRunnable = new Runnable() {
+	   @Override
+	   public void run() {
+		   s3Client = new AmazonS3Client( new BasicAWSCredentials( AWS_ACCESS_ID, AWS_SECRET_KEY ) );
+		   //See http://docs.aws.amazon.com/general/latest/gr/rande.html
+		   //US standard end point = s3.amazonaws.com
+		   s3Client.setEndpoint("s3.amazonaws.com");
+	       ObjectListing images = s3Client.listObjects(AWS_PICTURE_BUCKET ); 
+
+			List<S3ObjectSummary> list = images.getObjectSummaries();
+			for(S3ObjectSummary image: list) {
+			    S3Object obj = s3Client.getObject(AWS_PICTURE_BUCKET , image.getKey());
+			}
+			if(list != null && list.size() > 0) {
+				
+				S3ObjectSummary image = list.get(0);
+			
+				S3Object o = s3Client.getObject(AWS_PICTURE_BUCKET, image.getKey());
+				InputStream is = o.getObjectContent();
+				back = Bitmap.createScaledBitmap(BitmapFactory.decodeStream(is), Card.scaleWidthFactor, Card.scaleHeightFactor, true);
+				try {
+					is.close();
+				} catch (IOException e) {
+					
+				}
+			}
+		}
+	};
+		
+	
 	
 	
 	/**
