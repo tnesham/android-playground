@@ -18,11 +18,13 @@
             android:layout_height="fill_parent"
             android:padding="5dp">
             
+            <!-- Match Game -->
              <TableLayout android:id="@+id/tabOneContentView" 
         			android:layout_height="match_parent" 
         			android:layout_width="match_parent" />
     		
-             <View
+             <!-- Image picker -->
+             <ImageSwitcher
                 android:id="@+id/tabTwoContentView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />

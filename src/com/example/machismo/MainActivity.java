@@ -1,11 +1,8 @@
 package com.example.machismo;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Random;
 
 import android.app.Activity;
@@ -14,7 +11,6 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -32,11 +28,6 @@ import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.ObjectListing;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.example.machismo.Card.CardState;
 
 
@@ -53,10 +44,7 @@ import com.example.machismo.Card.CardState;
  */
 public class MainActivity extends Activity implements TabContentFactory, OnTabChangeListener
 {
-	
-	public static final String AWS_ACCESS_ID = "AKIAJJJBR3T3ZGZ73BAA";
-	public static final String AWS_SECRET_KEY = "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";
-	public static final String AWS_PICTURE_BUCKET = "ENT_CARD_BACK_IMAGES";
+
 	
 	private TabHost mTabHost;
 	private final String TAB_ONE_TAG = "Match Game";
@@ -89,7 +77,6 @@ public class MainActivity extends Activity implements TabContentFactory, OnTabCh
 	private int matchQtyForPoints=2;
 	
 	
-	private AmazonS3Client s3Client;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -97,7 +84,6 @@ public class MainActivity extends Activity implements TabContentFactory, OnTabCh
 		super.onCreate(savedInstanceState);
 		Log.i("Machismo", "Called onCreate");
 
-		AsyncTask.execute(awsRunnable);
 		
 		setContentView(R.layout.activity_main);
         //setup Views for each tab
@@ -106,7 +92,7 @@ public class MainActivity extends Activity implements TabContentFactory, OnTabCh
         setupTabs();
 
 		initCardsIds();
-		//back = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.back), Card.scaleWidthFactor, Card.scaleHeightFactor, true);
+		back = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.back), Card.scaleWidthFactor, Card.scaleHeightFactor, true);
 
 		
 		generateRandomCardIds(cardIds, randomCardIds, numberOfCardsInSubset);
@@ -114,50 +100,29 @@ public class MainActivity extends Activity implements TabContentFactory, OnTabCh
 		
 		buildTable(randomCardIds, getResources().getConfiguration().orientation, numberOfCardsInSubset, true);
 
+		
+//		SharedPreferences sharedPref = this.getSharedPreferences("preferences", Context.MODE_PRIVATE);
+//		
+//		String awsAccessKey = sharedPref.getString("AWS_ACCESS_ID", "");
+//		String awsSecretKey = sharedPref.getString("AWS_SECRET_KEY", "");
+		
 		setActionBar();
 		
 	}
 	
 
+			
+	
 	/**
 	 * 
-	 * StrictMode.ThreadPolicy was introduced since API Level 9 and the default thread policy had been changed since API Level 11, 
-	 * which in short, does not allow network operation (include HttpClient and HttpUrlConnection) get executed on UI thread. 
-	 * if you do this, you get NetworkOnMainThreadException.
-	 * 
-	 * 
 	 */
-	private Runnable awsRunnable = new Runnable() {
-	   @Override
-	   public void run() {
-		   s3Client = new AmazonS3Client( new BasicAWSCredentials( AWS_ACCESS_ID, AWS_SECRET_KEY ) );
-		   //See http://docs.aws.amazon.com/general/latest/gr/rande.html
-		   //US standard end point = s3.amazonaws.com
-		   s3Client.setEndpoint("s3.amazonaws.com");
-	       ObjectListing images = s3Client.listObjects(AWS_PICTURE_BUCKET ); 
-
-			List<S3ObjectSummary> list = images.getObjectSummaries();
-			for(S3ObjectSummary image: list) {
-			    S3Object obj = s3Client.getObject(AWS_PICTURE_BUCKET , image.getKey());
-			}
-			if(list != null && list.size() > 0) {
-				
-				S3ObjectSummary image = list.get(0);
-			
-				S3Object o = s3Client.getObject(AWS_PICTURE_BUCKET, image.getKey());
-				InputStream is = o.getObjectContent();
-				back = Bitmap.createScaledBitmap(BitmapFactory.decodeStream(is), Card.scaleWidthFactor, Card.scaleHeightFactor, true);
-				try {
-					is.close();
-				} catch (IOException e) {
-					
-				}
-			}
-		}
-	};
+	private void resetCardBack(Bitmap back) {
 		
-	
-	
+		for (Card cardOnTable : cardsOnTable) {
+			cardOnTable.setBack(back);
+			cardOnTable.showBack();
+		}
+	}
 	
 	/**
 	 * Sets up a new tab with given tag by creating a View for the tab (via
@@ -195,12 +160,8 @@ public class MainActivity extends Activity implements TabContentFactory, OnTabCh
      public void setupViews() {
         tabOneContentView = findViewById(R.id.tabOneContentView);
         //Setting colors to see were the borders are visible is a good method for developing
-        //TODO take colors out later
-        //tabOneContentView.setBackgroundColor(Color.BLUE);
         
         tabTwoContentView = findViewById(R.id.tabTwoContentView);
-        tabTwoContentView.setBackgroundColor(Color.GREEN);
-        
      }
  
     /**
