@@ -25,6 +25,7 @@ import com.amazonaws.services.s3.model.S3ObjectSummary;
 public class AwsImageSelector {
 
 	private AmazonS3Client s3Client;
+	//For personal development purposes I store these here but make them inactive frequently
 	public static final String AWS_ACCESS_ID = "";
 	public static final String AWS_SECRET_KEY = "";
 	public static final String AWS_PICTURE_BUCKET = "ENT_CARD_BACK_IMAGES";
