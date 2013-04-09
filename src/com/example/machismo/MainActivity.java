@@ -3,14 +3,15 @@ package com.example.machismo;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Random;
+import java.util.Set;
 
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -20,6 +21,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
+import android.widget.ImageView;
 import android.widget.TabHost;
 import android.widget.TabHost.OnTabChangeListener;
 import android.widget.TabHost.TabContentFactory;
@@ -77,6 +79,7 @@ public class MainActivity extends Activity implements TabContentFactory, OnTabCh
 	private int matchQtyForPoints=2;
 	
 	
+	private AwsImageSelector awsImageSelector = new AwsImageSelector();
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -84,6 +87,7 @@ public class MainActivity extends Activity implements TabContentFactory, OnTabCh
 		super.onCreate(savedInstanceState);
 		Log.i("Machismo", "Called onCreate");
 
+		awsImageSelector.getImages();
 		
 		setContentView(R.layout.activity_main);
         //setup Views for each tab
@@ -159,7 +163,7 @@ public class MainActivity extends Activity implements TabContentFactory, OnTabCh
      */
      public void setupViews() {
         tabOneContentView = findViewById(R.id.tabOneContentView);
-        //Setting colors to see were the borders are visible is a good method for developing
+        //Setting colors to see where the borders are visible is a good method for developing
         
         tabTwoContentView = findViewById(R.id.tabTwoContentView);
      }
@@ -203,8 +207,37 @@ public class MainActivity extends Activity implements TabContentFactory, OnTabCh
         return null;
     }
  
+    /**
+     * 
+     */
     public void onTabChanged(String tabName) {
-        
+    	
+    	if(tabName.equals(TAB_ONE_TAG)) {
+    		return;
+    	}
+    	HashMap <String, Bitmap> picsMap =  awsImageSelector.getImages();
+    	int picQty = picsMap.size();
+    	if(picsMap == null || picQty == 0) {
+    		return;
+    	}
+    	
+    	ImageView iv=null;
+    	Bitmap image=null;
+    	TableRow tr = null;
+    	TableLayout tableLayout = (TableLayout) findViewById(R.id.tabTwoContentView);
+    	Set <String>keys = picsMap.keySet();
+    	for (String key : keys) {
+			iv = new ImageView(getApplicationContext());
+			iv.setOnTouchListener(mImageSelectorTouchListener);
+			image = picsMap.get(key);
+			iv.setImageBitmap(image);
+			tr = new TableRow(this);
+			tr.setLayoutParams(new TableRow.LayoutParams(TableRow.LayoutParams.WRAP_CONTENT, TableRow.LayoutParams.WRAP_CONTENT));
+			/* Add row to TableLayout. */
+			tableLayout.addView(tr, new TableLayout.LayoutParams(TableLayout.LayoutParams.WRAP_CONTENT, TableLayout.LayoutParams.WRAP_CONTENT));
+			tr.addView(iv);
+		}
+    	
     }
 	
 	/**
@@ -496,6 +529,22 @@ public class MainActivity extends Activity implements TabContentFactory, OnTabCh
 		setActionBar();
 	}
 
+	
+	private OnTouchListener mImageSelectorTouchListener = new OnTouchListener() {
+
+		@Override
+		public boolean onTouch(View v, MotionEvent mev) {
+
+			int action = mev.getAction();
+			if (action != MotionEvent.ACTION_DOWN) {
+				return true;
+			}
+
+			return true;
+		}
+
+	};
+	
 	
 	/**
 	 * 

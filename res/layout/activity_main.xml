@@ -22,12 +22,10 @@
              <TableLayout android:id="@+id/tabOneContentView" 
         			android:layout_height="match_parent" 
         			android:layout_width="match_parent" />
-    		
-             <!-- Image picker -->
-             <ImageSwitcher
-                android:id="@+id/tabTwoContentView"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+             
+             <TableLayout android:id="@+id/tabTwoContentView" 
+        			android:layout_height="match_parent" 
+        			android:layout_width="match_parent" />
             
         </FrameLayout>
     </LinearLayout>

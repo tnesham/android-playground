@@ -38,11 +38,12 @@ public class AwsImageSelector {
 	/**
 	 * Runs an Async task to get images from Amazon Web S3 
 	 */
-	public void getImages() {
+	public HashMap <String, Bitmap> getImages() {
 		
 		if(amazonImageMap.size() < 1) {
 			AsyncTask.execute(awsRunnable);
 		}
+		return amazonImageMap;
 	}
 	
 	
