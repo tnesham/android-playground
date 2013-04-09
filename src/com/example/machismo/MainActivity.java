@@ -133,12 +133,17 @@ public class MainActivity extends Activity implements TabContentFactory, OnTabCh
 	
 	/**
 	 * 
+	 * 
+	 * 
+	 * 
 	 */
 	public void resetCardBack(Bitmap back) {
 		
 		for (Card cardOnTable : cardsOnTable) {
-			cardOnTable.setBack(back);
-			cardOnTable.showBack();
+			if(cardOnTable.hasCardState(CardState.BACK_SHOWN)) {
+				cardOnTable.setBack(back);
+				cardOnTable.showBack();
+			}
 		}
 	}
 	
@@ -266,7 +271,7 @@ public class MainActivity extends Activity implements TabContentFactory, OnTabCh
     	if(tabName.equals(TAB_ONE_TAG)) {
     		return;
     	}
-    	displayCardBacksInTabView();
+    	//displayCardBacksInTabView();
     	
     }
 	
