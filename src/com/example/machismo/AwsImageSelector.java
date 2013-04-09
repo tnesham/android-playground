@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
+import android.util.Log;
 
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3Client;
@@ -16,11 +17,16 @@ import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 
+/**
+ * 
+ * @author e300md
+ *
+ */
 public class AwsImageSelector {
 
 	private AmazonS3Client s3Client;
-	public static final String AWS_ACCESS_ID = "AKIAJJJBR3T3ZGZ73BAA";
-	public static final String AWS_SECRET_KEY = "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";
+	public static final String AWS_ACCESS_ID = "";
+	public static final String AWS_SECRET_KEY = "";
 	public static final String AWS_PICTURE_BUCKET = "ENT_CARD_BACK_IMAGES";
 	//See http://docs.aws.amazon.com/general/latest/gr/rande.html
 	//US standard end point = s3.amazonaws.com
@@ -69,7 +75,7 @@ public class AwsImageSelector {
 			    S3Object s3Object = s3Client.getObject(AWS_PICTURE_BUCKET , image.getKey());
 			
 			    InputStream is = s3Object.getObjectContent();
-				Bitmap bitmapImage = Bitmap.createScaledBitmap(BitmapFactory.decodeStream(is), Card.scaleWidthFactor, Card.scaleHeightFactor, true);
+				Bitmap bitmapImage = Bitmap.createScaledBitmap(BitmapFactory.decodeStream(is), 325, 160, true);
 				
 				try {
 					is.close();
@@ -79,6 +85,7 @@ public class AwsImageSelector {
 			    amazonImageMap.put(image.getKey(), bitmapImage);
 			}
 
+			Log.i("Machismo", String.format("%d images have been downloaded", list.size() ));
 			Intent broadcastIntent = new Intent();
 		    broadcastIntent.setAction(AwsBroadcastReceiver.ACTION_RESP);
 		    broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);

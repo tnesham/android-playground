@@ -14,6 +14,7 @@ import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -46,6 +47,7 @@ import com.example.machismo.Card.CardState;
  * 4/7/2013 - Added TabHost and tabs so game is in one tab and images to use as card back are in another
  * 4/8/2013 - Added AwsImageSelector to fetch bitmaps from AWS S3
  * 4/9/2013 - Added AwsBroadcastReceiver to notify when AWS service has completed
+ * 			- Added View to display Images from Amazon cloud, and select image to be used a "back" of card.
  *
  */
 public class MainActivity extends Activity implements TabContentFactory, OnTabChangeListener
@@ -222,9 +224,16 @@ public class MainActivity extends Activity implements TabContentFactory, OnTabCh
     
     /**
      * 
+     * Displays card backs if not already displayed
+     * 
      */
     public void displayCardBacksInTabView() {
 
+    	TableLayout tableLayout = (TableLayout) findViewById(R.id.tabTwoContentView);
+    	if(tableLayout.getChildCount() > 1) {
+    		return;
+    	}
+    	
     	HashMap <String, Bitmap> picsMap =  awsImageSelector.getImages();
     	int picQty = picsMap.size();
     	if(picsMap == null || picQty == 0) {
@@ -233,10 +242,7 @@ public class MainActivity extends Activity implements TabContentFactory, OnTabCh
     	ImageView iv=null;
     	Bitmap image=null;
     	TableRow tr = null;
-    	TableLayout tableLayout = (TableLayout) findViewById(R.id.tabTwoContentView);
-    	if(tableLayout.getChildCount() > 1) {
-    		return;
-    	}
+    	
     	Set <String>keys = picsMap.keySet();
     	for (String key : keys) {
 			iv = new ImageView(getApplicationContext());
@@ -564,6 +570,13 @@ public class MainActivity extends Activity implements TabContentFactory, OnTabCh
 				return true;
 			}
 
+			ImageView imageView = (ImageView) v;
+			if(imageView.getDrawable() != null) {
+				
+				Bitmap bitmap = ((BitmapDrawable)imageView.getDrawable()).getBitmap();
+				resetCardBack(Bitmap.createScaledBitmap(bitmap, Card.scaleWidthFactor, Card.scaleHeightFactor, true));
+			}
+			
 			return true;
 		}
 
