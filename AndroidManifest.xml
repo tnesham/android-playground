@@ -24,7 +24,12 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            
         </activity>
+        
+        <service android:name="AwsBroadcastReceiver" >
+        </service>
+        	
     </application>
 
 </manifest>

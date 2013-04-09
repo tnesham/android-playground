@@ -9,6 +9,8 @@ import java.util.Set;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -41,7 +43,9 @@ import com.example.machismo.Card.CardState;
  * 4/5/2013 - Add ability to maintain "state" when device rotated - see onConfigurationChanged
  * 			- Added handler.postDelayed(runnable) to hide card(s) that did not match
  * 			- Added CardState enum to make it simpler to track when to flip a card 
- * 4/7/2013 - Added TabHost and tabs
+ * 4/7/2013 - Added TabHost and tabs so game is in one tab and images to use as card back are in another
+ * 4/8/2013 - Added AwsImageSelector to fetch bitmaps from AWS S3
+ * 4/9/2013 - Added AwsBroadcastReceiver to notify when AWS service has completed
  *
  */
 public class MainActivity extends Activity implements TabContentFactory, OnTabChangeListener
@@ -78,8 +82,11 @@ public class MainActivity extends Activity implements TabContentFactory, OnTabCh
 	//difficulty level
 	private int matchQtyForPoints=2;
 	
+	//Gets images from AWS S3
+	private AwsImageSelector awsImageSelector = new AwsImageSelector(this);
 	
-	private AwsImageSelector awsImageSelector = new AwsImageSelector();
+	//Notifies when images have been received
+	private AwsBroadcastReceiver receiver;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -87,6 +94,11 @@ public class MainActivity extends Activity implements TabContentFactory, OnTabCh
 		super.onCreate(savedInstanceState);
 		Log.i("Machismo", "Called onCreate");
 
+		IntentFilter filter = new IntentFilter(AwsBroadcastReceiver.ACTION_RESP);
+        filter.addCategory(Intent.CATEGORY_DEFAULT);
+        receiver = new AwsBroadcastReceiver(this);
+        registerReceiver(receiver, filter);
+		
 		awsImageSelector.getImages();
 		
 		setContentView(R.layout.activity_main);
@@ -120,7 +132,7 @@ public class MainActivity extends Activity implements TabContentFactory, OnTabCh
 	/**
 	 * 
 	 */
-	private void resetCardBack(Bitmap back) {
+	public void resetCardBack(Bitmap back) {
 		
 		for (Card cardOnTable : cardsOnTable) {
 			cardOnTable.setBack(back);
@@ -207,24 +219,24 @@ public class MainActivity extends Activity implements TabContentFactory, OnTabCh
         return null;
     }
  
+    
     /**
      * 
      */
-    public void onTabChanged(String tabName) {
-    	
-    	if(tabName.equals(TAB_ONE_TAG)) {
-    		return;
-    	}
+    public void displayCardBacksInTabView() {
+
     	HashMap <String, Bitmap> picsMap =  awsImageSelector.getImages();
     	int picQty = picsMap.size();
     	if(picsMap == null || picQty == 0) {
     		return;
     	}
-    	
     	ImageView iv=null;
     	Bitmap image=null;
     	TableRow tr = null;
     	TableLayout tableLayout = (TableLayout) findViewById(R.id.tabTwoContentView);
+    	if(tableLayout.getChildCount() > 1) {
+    		return;
+    	}
     	Set <String>keys = picsMap.keySet();
     	for (String key : keys) {
 			iv = new ImageView(getApplicationContext());
@@ -237,6 +249,18 @@ public class MainActivity extends Activity implements TabContentFactory, OnTabCh
 			tableLayout.addView(tr, new TableLayout.LayoutParams(TableLayout.LayoutParams.WRAP_CONTENT, TableLayout.LayoutParams.WRAP_CONTENT));
 			tr.addView(iv);
 		}
+    	
+    }
+    
+    /**
+     * 
+     */
+    public void onTabChanged(String tabName) {
+    	
+    	if(tabName.equals(TAB_ONE_TAG)) {
+    		return;
+    	}
+    	displayCardBacksInTabView();
     	
     }
 	
@@ -634,5 +658,15 @@ public class MainActivity extends Activity implements TabContentFactory, OnTabCh
 				
 		}
 		return true;
+	}
+	
+	@Override
+	protected void onPause() {
+		super.onPause();
+		
+		try {
+			unregisterReceiver(receiver);
+		} catch (Exception e) {
+		}
 	}
 }

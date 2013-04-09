@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
@@ -27,12 +28,13 @@ public class AwsImageSelector {
 	
 	private HashMap <String, Bitmap>amazonImageMap = new HashMap<String, Bitmap>();
 
+	private MainActivity mainActivity;
 	
 	/**
 	 * Constructor
 	 */
-	public AwsImageSelector() {
-
+	public AwsImageSelector(MainActivity mainActivity) {
+		this.mainActivity = mainActivity;
 	}
 	
 	/**
@@ -77,6 +79,11 @@ public class AwsImageSelector {
 			    amazonImageMap.put(image.getKey(), bitmapImage);
 			}
 
+			Intent broadcastIntent = new Intent();
+		    broadcastIntent.setAction(AwsBroadcastReceiver.ACTION_RESP);
+		    broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
+		    //broadcastIntent.putExtra(PARAM_OUT_MSG, resultTxt);
+		    mainActivity.sendBroadcast(broadcastIntent);
 		}
 	};
 
