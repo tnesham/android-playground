@@ -30,7 +30,7 @@ public class AwsImageSelector {
 	public static final String AWS_SECRET_KEY = "plQbjM+p0JKvf3Yha01xmlYjagswKajXRD0TxXq8";
 	public static final String AWS_PICTURE_BUCKET = "ENT_CARD_BACK_IMAGES";
 	//See http://docs.aws.amazon.com/general/latest/gr/rande.html
-	//US standard end point = s3.amazonaws.com
+	//US standard end point = s3.amazonaws.com 
 	public static final String AWS_ENDPOINT = "s3.amazonaws.com";
 	
 	private HashMap <String, Bitmap>amazonImageMap = new HashMap<String, Bitmap>();
